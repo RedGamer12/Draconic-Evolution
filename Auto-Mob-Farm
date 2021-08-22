@@ -1,0 +1,81 @@
+local client = game.Players.LocalPlayer
+
+function farm(mob)
+	if mob and mob:FindFirstChild"HumanoidRootPart" and mob:FindFirstChild"Humanoid" and client.Character then
+		if mob.Humanoid.Health > 0 then
+			local speed = (client.Character.HumanoidRootPart.Position - mob.HumanoidRootPart.Position).Magnitude / 40
+			game:GetService"TweenService":Create(client.Character.HumanoidRootPart, TweenInfo.new(speed, Enum.EasingStyle.Quad), {
+				CFrame = mob.HumanoidRootPart.CFrame * CFrame.new(0, -6, 0) * CFrame.Angles(1.5, 0, 0)
+			}):Play()
+			if (client.Character.HumanoidRootPart.Position - mob.HumanoidRootPart.Position).Magnitude <= 8 then
+				if client.Backpack:FindFirstChildOfClass"Tool" then
+					client.Backpack:FindFirstChildOfClass"Tool".Parent = client.Character
+				end
+				game:GetService"ReplicatedStorage".Remotes.Combat:FireServer"LightAttack"
+			end
+		end
+	end
+end
+
+if not _G.once then
+	_G.once = true
+	game:GetService"RunService".Stepped:connect(function()
+		if _G.djhwashdwa then game.Players.LocalPlayer.Character.Humanoid:ChangeState(11) end
+	end)
+end
+local target = _G.mob
+
+function check(target)
+	for _, v in pairs(workspace.Entities.AI:GetChildren()) do
+		if target ~= "" then
+			if v.Name:sub(1, #target):lower() == target:lower() then
+				if not v:FindFirstChild"HumanoidRootPart" then
+					game:GetService"StarterGui":SetCore("SendNotification", {
+						Title = "Notification",
+						Text = "Mob is not loaded\nGet close to the mob\nto load the mob",
+						Duration = 2
+					})
+				elseif v:FindFirstChild"HumanoidRootPart" then
+					game:GetService"StarterGui":SetCore("SendNotification", { Title = "Notification", Text = "Now Targeting " .. v.Name, Duration = 2 })
+				end
+				return true
+			end
+		end
+	end
+	return false
+end
+
+if not _G.Enabled then
+	_G.djhwashdwa = false
+	game:GetService"StarterGui":SetCore("SendNotification", { Title = "Notification", Text = "Auto Farm Is now Disabled", Duration = 2 })
+	return
+end
+if not check(_G.mob) then
+	_G.djhwashdwa = false
+	game:GetService"StarterGui":SetCore("SendNotification", { Title = "Notification", Text = "Did not found mob", Duration = 2 })
+	return
+end
+_G.djhwashdwa = true
+spawn(function()
+	while _G.Enabled and wait() and _G.mob == target do
+		if client.Character then
+			local distance, mob = math.huge
+			for _, v in pairs(workspace.Entities.AI:GetChildren()) do
+				if v.Name:sub(1, #target):lower() == target:lower() then
+					pcall(function()
+						if v:FindFirstChild"HumanoidRootPart" and v:FindFirstChild"Humanoid" then
+							if v.Humanoid.Health > 0 then
+								local distanceFromChar = (client.Character.HumanoidRootPart.Position - v.HumanoidRootPart.Position).Magnitude
+								if distanceFromChar < distance then
+									distance = distanceFromChar
+									mob = v
+								end
+							end
+						end
+					end)
+				end
+			end
+			if mob ~= nil then farm(mob) end
+		end
+	end
+end)
